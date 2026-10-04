@@ -1,0 +1,6 @@
+{
+  "name": "Talibon Workspace",
+  "description": "Personalized Productivity, Planning and Progress Platform with role-aware templates, customizable dashboards, and modular tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
