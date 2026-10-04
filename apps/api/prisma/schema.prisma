@@ -1,0 +1,520 @@
+// Talibon Workspace Prisma Schema
+// Based on Schema_Plan.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  owner
+  admin
+  member
+  viewer
+}
+
+enum TemplateKey {
+  teacher
+  student
+  employee
+  freelancer
+  business
+  personal
+  custom
+}
+
+enum TaskStatus {
+  todo
+  in_progress
+  done
+  archived
+}
+
+enum PriorityLevel {
+  low
+  medium
+  high
+  urgent
+}
+
+enum AssignmentStatus {
+  todo
+  in_progress
+  done
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  late
+  excused
+}
+
+enum TrendStatus {
+  improving
+  consistent
+  needs_attention
+  significant_decline
+}
+
+enum GoalType {
+  academic
+  professional
+  financial
+  personal
+  business
+}
+
+enum TxnType {
+  income
+  expense
+  savings
+}
+
+enum PlanTier {
+  free
+  premium
+  education
+  organization
+}
+
+model Profile {
+  id           String       @id @default(uuid())
+  fullName     String       @map("full_name")
+  avatarUrl    String?      @map("avatar_url")
+  primaryRole  TemplateKey? @map("primary_role")
+  locale       String       @default("en")
+  timezone     String       @default("Asia/Manila")
+  preferences  Json         @default("{}")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  workspacesOwned  Workspace[]       @relation("WorkspaceOwner")
+  workspaceMembers WorkspaceMember[]
+
+  @@map("profiles")
+}
+
+model Workspace {
+  id             String       @id @default(uuid())
+  ownerId        String       @map("owner_id")
+  name           String
+  template       TemplateKey  @default(custom)
+  icon           String?
+  color          String?
+  currency       String       @default("PHP")
+  settings       Json         @default("{}")
+  organizationId String?      @map("organization_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+
+  owner          Profile      @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members        WorkspaceMember[]
+  modules        WorkspaceModule[]
+  widgets        DashboardWidget[]
+  dashboard      DashboardSettings?
+  tasks          Task[]
+  notes          Note[]
+  calendarEvents CalendarEvent[]
+  goals          Goal[]
+  classes        Class[]
+  students       Student[]
+  lessonPlans    LessonPlan[]
+  subjects       Subject[]
+  assignments    Assignment[]
+  products       Product[]
+  customers      Customer[]
+  orders         Order[]
+  transactions   Transaction[]
+  trackers       TrackerDefinition[]
+
+  @@index([ownerId])
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  workspaceId String     @map("workspace_id")
+  userId      String     @map("user_id")
+  role        MemberRole @default(member)
+  joinedAt    DateTime   @default(now()) @map("joined_at")
+
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        Profile    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model ModuleCatalog {
+  key          String   @id
+  name         String
+  description  String
+  category     String
+  icon         String
+  isCore       Boolean  @default(false) @map("is_core")
+  minTier      PlanTier @default(free) @map("min_tier")
+
+  modules      WorkspaceModule[]
+
+  @@map("module_catalog")
+}
+
+model WidgetCatalog {
+  type         String   @id
+  moduleKey    String   @map("module_key")
+  name         String
+  description  String
+  defaultW     Int      @default(2) @map("default_w")
+  defaultH     Int      @default(2) @map("default_h")
+  minW         Int      @default(1) @map("min_w")
+  minH         Int      @default(1) @map("min_h")
+
+  widgets      DashboardWidget[]
+
+  @@map("widget_catalog")
+}
+
+model RoleTemplate {
+  key            TemplateKey @id
+  name           String
+  description    String
+  defaultModules Json        @map("default_modules")
+  defaultWidgets Json        @map("default_widgets")
+  priorityTopic  String?     @map("priority_topic")
+
+  @@map("role_templates")
+}
+
+model WorkspaceModule {
+  workspaceId String   @map("workspace_id")
+  moduleKey   String   @map("module_key")
+  enabled     Boolean  @default(true)
+  settings    Json     @default("{}")
+  enabledAt   DateTime @default(now()) @map("enabled_at")
+
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  catalog     ModuleCatalog @relation(fields: [moduleKey], references: [key])
+
+  @@id([workspaceId, moduleKey])
+  @@map("workspace_modules")
+}
+
+model DashboardSettings {
+  workspaceId String   @id @map("workspace_id")
+  layoutMode  String   @default("grid") @map("layout_mode")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("dashboard_settings")
+}
+
+model DashboardWidget {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  widgetType  String   @map("widget_type")
+  title       String?
+  x           Int      @default(0)
+  y           Int      @default(0)
+  w           Int      @default(2)
+  h           Int      @default(2)
+  position    Int      @default(0)
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  catalog     WidgetCatalog @relation(fields: [widgetType], references: [type])
+
+  @@index([workspaceId])
+  @@map("dashboard_widgets")
+}
+
+model Task {
+  id               String        @id @default(uuid())
+  workspaceId      String        @map("workspace_id")
+  title            String
+  description      String?
+  status           TaskStatus    @default(todo)
+  priority         PriorityLevel @default(medium)
+  dueAt            DateTime?     @map("due_at")
+  completedAt      DateTime?     @map("completed_at")
+  estimatedMinutes Int?          @map("estimated_minutes")
+  projectId        String?       @map("project_id")
+  goalId           String?       @map("goal_id")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  deletedAt        DateTime?     @map("deleted_at")
+
+  workspace        Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  goal             Goal?         @relation(fields: [goalId], references: [id])
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+  @@map("tasks")
+}
+
+model Note {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  title       String
+  body        String    @default("")
+  category    String    @default("General")
+  pinned      Boolean   @default(false)
+  color       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("notes")
+}
+
+model CalendarEvent {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  title       String
+  description String?
+  startAt     DateTime @map("start_at")
+  endAt       DateTime @map("end_at")
+  allDay      Boolean  @default(false) @map("all_day")
+  location    String?
+  category    String   @default("general")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("calendar_events")
+}
+
+model Goal {
+  id          String      @id @default(uuid())
+  workspaceId String      @map("workspace_id")
+  title       String
+  category    String      @default("personal")
+  progress    Int         @default(0)
+  targetDate  DateTime?   @map("target_date")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  milestones  Milestone[]
+  tasks       Task[]
+
+  @@index([workspaceId])
+  @@map("goals")
+}
+
+model Milestone {
+  id        String   @id @default(uuid())
+  goalId    String   @map("goal_id")
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@map("milestones")
+}
+
+model Class {
+  id             String      @id @default(uuid())
+  workspaceId    String      @map("workspace_id")
+  name           String
+  subject        String
+  schedule       String?
+  room           String?
+  academicPeriod String?     @map("academic_period")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  workspace      Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  students       ClassStudent[]
+
+  @@index([workspaceId])
+  @@map("classes")
+}
+
+model Student {
+  id          String      @id @default(uuid())
+  workspaceId String      @map("workspace_id")
+  fullName    String      @map("full_name")
+  email       String?
+  phone       String?
+  guardian    String?
+  trend       TrendStatus @default(consistent)
+  notes       String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  classes     ClassStudent[]
+
+  @@index([workspaceId])
+  @@map("students")
+}
+
+model ClassStudent {
+  classId   String   @map("class_id")
+  studentId String   @map("student_id")
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
+
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([classId, studentId])
+  @@map("class_students")
+}
+
+model LessonPlan {
+  id           String    @id @default(uuid())
+  workspaceId  String    @map("workspace_id")
+  title        String
+  subject      String
+  date         String
+  templateType String    @map("template_type")
+  status       String    @default("draft")
+  objectives   Json      @default("[]")
+  materials    Json      @default("[]")
+  procedure    Json      @default("[]")
+  assessment   String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("lesson_plans")
+}
+
+model Subject {
+  id          String       @id @default(uuid())
+  workspaceId String       @map("workspace_id")
+  name        String
+  code        String?
+  color       String?
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+
+  @@index([workspaceId])
+  @@map("subjects")
+}
+
+model Assignment {
+  id             String           @id @default(uuid())
+  workspaceId    String           @map("workspace_id")
+  subjectId      String?          @map("subject_id")
+  title          String
+  deadline       String
+  priority       PriorityLevel    @default(medium)
+  estimatedHours Float            @default(1.0) @map("estimated_hours")
+  status         AssignmentStatus @default(todo)
+  groupName      String           @default("today") @map("group_name")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  subject        Subject?         @relation(fields: [subjectId], references: [id])
+
+  @@index([workspaceId])
+  @@map("assignments")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  sku         String?
+  stock       Int      @default(0)
+  minStock    Int      @default(5) @map("min_stock")
+  costPrice   Decimal  @default(0) @map("cost_price") @db.Decimal(12, 2)
+  price       Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("products")
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  email       String?
+  phone       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@index([workspaceId])
+  @@map("customers")
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  customerId  String?  @map("customer_id")
+  itemsDesc   String   @map("items_desc")
+  totalAmount Decimal  @default(0) @map("total_amount") @db.Decimal(12, 2)
+  profit      Decimal  @default(0) @db.Decimal(12, 2)
+  status      String   @default("completed")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  customer    Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([workspaceId])
+  @@map("orders")
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  type        TxnType  @default(expense)
+  category    String   @default("general")
+  date        DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("transactions")
+}
+
+model TrackerDefinition {
+  id          String          @id @default(uuid())
+  workspaceId String          @map("workspace_id")
+  title       String
+  unit        String
+  targetDaily Float           @default(1) @map("target_daily")
+  streak      Int             @default(0)
+
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  records     TrackerRecord[]
+
+  @@index([workspaceId])
+  @@map("tracker_definitions")
+}
+
+model TrackerRecord {
+  id          String            @id @default(uuid())
+  trackerId   String            @map("tracker_id")
+  date        String
+  value       Float
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  tracker     TrackerDefinition @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+
+  @@index([trackerId])
+  @@map("tracker_records")
+}

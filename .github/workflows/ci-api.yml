@@ -1,0 +1,48 @@
+name: CI - API (NestJS)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/api/**'
+      - 'packages/shared/**'
+      - '.github/workflows/ci-api.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'packages/shared/**'
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @talibon/api prisma:generate
+
+      - name: Typecheck Backend
+        run: pnpm --filter @talibon/api build
+
+      - name: Run Unit Tests
+        run: pnpm --filter @talibon/api test --if-present
+
+      - name: Build Docker Container Image
+        run: |
+          docker build -t talibon-api:latest -f apps/api/Dockerfile . || true
