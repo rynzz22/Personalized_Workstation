@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useWorkspace, AppView } from '../../context/WorkspaceContext';
 import {
   LayoutDashboard,
@@ -22,6 +22,12 @@ import {
 
 export const Sidebar: React.FC = () => {
   const drawerRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) drawerRef.current?.close(); };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, []);
   const {
     activeView,
     setActiveView,
