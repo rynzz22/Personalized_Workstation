@@ -26,10 +26,10 @@ export const NotesRecentWidget: React.FC<{ workspaceId: string }> = ({ workspace
           </div>
         ) : (
           wsNotes.map(n => (
-            <div
+            <button
               key={n.id}
               onClick={() => setActiveView('notes')}
-              className="p-2.5 rounded-lg border border-slate-200 bg-white hover:border-indigo-300 transition-all cursor-pointer group"
+              className="w-full text-left p-2.5 rounded-lg border border-slate-200 bg-white hover:border-indigo-300 transition-all cursor-pointer group"
             >
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-indigo-600">
@@ -48,7 +48,7 @@ export const NotesRecentWidget: React.FC<{ workspaceId: string }> = ({ workspace
                 </span>
                 <span>{n.updatedAt}</span>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>

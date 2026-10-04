@@ -59,6 +59,7 @@ export const TaskListWidget: React.FC<{ workspaceId: string }> = ({ workspaceId 
         <form onSubmit={handleAdd} className="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
           <input
             type="text"
+            aria-label="Task title"
             value={newTitle}
             onChange={e => setNewTitle(e.target.value)}
             placeholder="What needs to be done?"
@@ -67,6 +68,7 @@ export const TaskListWidget: React.FC<{ workspaceId: string }> = ({ workspaceId 
           />
           <div className="flex items-center justify-between">
             <select
+              aria-label="Task priority"
               value={newPriority}
               onChange={e => setNewPriority(e.target.value as any)}
               className="text-[11px] px-2 py-1 bg-white border border-slate-300 rounded"
@@ -116,6 +118,8 @@ export const TaskListWidget: React.FC<{ workspaceId: string }> = ({ workspaceId 
               >
                 <button
                   type="button"
+                  aria-label={`${isDone ? 'Mark incomplete' : 'Complete'}: ${task.title}`}
+                  aria-pressed={isDone}
                   className="mt-0.5 text-slate-400 group-hover:text-indigo-600 transition-colors"
                 >
                   {isDone ? (

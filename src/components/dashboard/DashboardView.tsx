@@ -110,9 +110,9 @@ export const DashboardView: React.FC = () => {
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
             <LayoutGrid className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">No widgets on this dashboard</h3>
+          <h3 className="text-base font-bold text-slate-900">{searchQuery.trim() ? 'No matching widgets' : 'No widgets on this dashboard'}</h3>
           <p className="text-xs text-slate-500 mt-1.5 max-w-sm leading-relaxed">
-            Personalize this workspace by picking widgets from the catalog matching your workflow.
+            {searchQuery.trim() ? 'Try another search to find what you need.' : 'Personalize this workspace by picking widgets from the catalog matching your workflow.'}
           </p>
           <button
             onClick={() => setIsCustomizeOpen(true)}
