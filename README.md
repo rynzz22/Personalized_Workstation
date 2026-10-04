@@ -7,7 +7,7 @@ Talibon Workspace is a customizable digital platform where each user builds a da
 
 ---
 
-## 📋 Monorepo Structure
+## Monorepo Structure
 
 ```
 talibon-workspace/
@@ -75,7 +75,7 @@ talibon-workspace/
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend (`apps/api`)
 - **Framework**: NestJS (TypeScript)
@@ -95,7 +95,7 @@ talibon-workspace/
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Install Dependencies
 ```bash
@@ -121,7 +121,7 @@ npm run dev
 
 ---
 
-## 🔒 Cross-Cutting Architecture
+##  Cross-Cutting Architecture
 
 - **Workspace Scoping**: Every domain table has `workspace_id` foreign key. All queries are strictly scoped to `workspaceId`.
 - **JWT Authentication (`JwtAuthGuard`)**: Validates Supabase JWT and attaches `req.user`.
@@ -132,5 +132,3 @@ npm run dev
 
 ---
 
-## 📄 License
-Apache-2.0
