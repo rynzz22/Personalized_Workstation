@@ -1,11 +1,9 @@
 import { z } from 'zod';
 import {
   TemplateKey,
-  MemberRole,
   PriorityLevel,
   TaskStatus,
   AssignmentStatus,
-  TransactionType,
 } from './enums';
 
 export const createProfileSchema = z.object({
