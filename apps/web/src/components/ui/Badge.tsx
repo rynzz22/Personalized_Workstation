@@ -50,7 +50,7 @@ export interface ToastProps {
   onClose?: () => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose }) => {
+export const Toast: React.FC<ToastProps> = ({ message, type: _type = 'info', onClose }) => {
   return (
     <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-900 text-white shadow-xl text-xs font-medium animate-in slide-in-from-bottom-2">
       <span>{message}</span>
