@@ -31,11 +31,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = obj.message || message;
         details = obj.details || (Array.isArray(obj.message) ? obj.message : undefined);
       }
-    } else if (exception instanceof Error) {
-      message = exception.message;
     }
 
-    const requestId = `req-${Date.now().toString(36)}`;
+    const requestId = (request as Request & {id?:string}).id || crypto.randomUUID();
 
     response.status(status).json({
       error: {

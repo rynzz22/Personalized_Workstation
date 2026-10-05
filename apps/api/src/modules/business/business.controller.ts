@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { WorkspaceGuard } from '../../common/guards/workspace.guard';
@@ -43,7 +43,7 @@ export class BusinessController {
 
   @Get('finance')
   @ApiOperation({ summary: 'Get monthly cashflow, income, expenses, and savings rate' })
-  getFinanceSummary(@Param('workspaceId') workspaceId: string) {
+  getFinanceSummary(@Param('workspaceId') _workspaceId: string) {
     return {
       monthlyIncome: 84500,
       monthlyExpenses: 46200,
