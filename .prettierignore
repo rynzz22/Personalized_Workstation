@@ -1,0 +1,10 @@
+node_modules
+dist
+artifacts
+pnpm-lock.yaml
+bun.lock
+docs/*_Plan.md
+/src/
+
+
+.local

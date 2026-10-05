@@ -1,35 +1,37 @@
-name: Deploy - Web (React + Vite)
-
+name: Deploy staging web
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
-
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: staging-web
+  cancel-in-progress: false
 jobs:
-  deploy-frontend:
+  deploy:
+    environment: staging
     runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: ${{ vars.STAGING_API_URL }}
+      VITE_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.STAGING_SUPABASE_PUBLISHABLE_KEY }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ vars.NETLIFY_STAGING_SITE_ID }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Static Production Distribution
-        run: pnpm --filter @talibon/web build
-
-      - name: Deploy to Vercel / Cloudflare Pages
+      - name: Validate deployment configuration
+        run: test -n "$VITE_API_URL" && test -n "$VITE_SUPABASE_URL" && test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" && test -n "$NETLIFY_AUTH_TOKEN" && test -n "$NETLIFY_SITE_ID"
+      - run: pnpm --filter @talibon/web test
+      - run: pnpm --filter @talibon/web build
+      - name: Upload staging bundle
         run: |
-          echo "Deploying static assets to web CDN"
+          cd apps/web/dist
+          zip -r ../../../web.zip .
+          cd ../../..
+          curl --fail --silent --show-error -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" -H "Content-Type: application/zip" --data-binary @web.zip "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID/deploys"

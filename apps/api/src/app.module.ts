@@ -1,66 +1,23 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
+import { InfraModule } from './infra/infra.module';
+import { CoreModule } from './modules/core/core.module';
 import { HealthModule } from './modules/health/health.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { WorkspacesModule } from './modules/workspaces/workspaces.module';
-import { TemplatesModule } from './modules/templates/templates.module';
-import { ModulesRegistryModule } from './modules/modules-registry/modules-registry.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { TasksModule } from './modules/tasks/tasks.module';
-import { NotesModule } from './modules/notes/notes.module';
-import { CalendarModule } from './modules/calendar/calendar.module';
-import { GoalsModule } from './modules/goals/goals.module';
-import { EducationModule } from './modules/education/education.module';
-import { BusinessModule } from './modules/business/business.module';
-import { TrackersModule } from './modules/trackers/trackers.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { PrismaService } from './infra/prisma.service';
-import { SupabaseService } from './infra/supabase.service';
-import { AppLogger } from './infra/logger.service';
-
 @Module({
-  imports: [
-    HealthModule,
-    AuthModule,
-    WorkspacesModule,
-    TemplatesModule,
-    ModulesRegistryModule,
-    DashboardModule,
-    TasksModule,
-    NotesModule,
-    CalendarModule,
-    GoalsModule,
-    EducationModule,
-    BusinessModule,
-    TrackersModule,
-    AnalyticsModule,
-  ],
-  providers: [
-    PrismaService,
-    SupabaseService,
-    AppLogger,
-    {
-      provide: APP_PIPE,
-      useValue: new ValidationPipe({
-        whitelist: true,
-        transform: true,
-      }),
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ResponseInterceptor,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
-    },
-  ],
+ imports: [
+  InfraModule, CoreModule, HealthModule,
+  ThrottlerModule.forRoot([{ ttl: 60000, limit: Number(process.env.THROTTLE_LIMIT || 100) }]),
+  LoggerModule.forRoot({ pinoHttp: { level: process.env.LOG_LEVEL || 'info', redact: ['req.headers.authorization','req.headers.cookie','res.headers.set-cookie'], genReqId: () => crypto.randomUUID() } }),
+ ],
+ providers: [
+  { provide: APP_GUARD, useClass: ThrottlerGuard },
+  { provide: APP_PIPE, useValue: new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }) },
+  { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
+  { provide: APP_FILTER, useClass: AllExceptionsFilter },
+ ],
 })
 export class AppModule {}

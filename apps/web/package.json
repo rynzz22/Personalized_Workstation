@@ -6,20 +6,39 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@talibon/shared": "workspace:*",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "@supabase/supabase-js": "2.57.4",
+    "@tanstack/react-query": "5.90.2",
+    "react-router-dom": "7.9.1",
+    "zustand": "5.0.8",
+    "react-grid-layout": "1.5.2",
+    "recharts": "3.2.1",
+    "@tiptap/react": "3.4.1",
+    "@tiptap/starter-kit": "3.4.1",
+    "react-resizable": "3.0.5"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
-    "typescript": "^5.5.0",
-    "vite": "^6.0.0"
+    "typescript": "5.9.2",
+    "vite": "^6.0.0",
+    "@tailwindcss/vite": "4.1.13",
+    "tailwindcss": "4.1.13",
+    "@types/react-grid-layout": "1.3.5",
+    "@types/node": "22.18.6",
+    "vitest": "3.2.4",
+    "@testing-library/react": "16.3.0",
+    "jsdom": "26.1.0",
+    "@playwright/test": "1.55.1"
   }
 }

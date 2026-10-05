@@ -1,0 +1,2 @@
+import { useEffect } from 'react';import { useUI } from '../../stores/ui';
+export function Toast(){const message=useUI(s=>s.toast);const notify=useUI(s=>s.notify);useEffect(()=>{if(!message)return;const timer=setTimeout(()=>notify(''),6000);return()=>clearTimeout(timer);},[message,notify]);return message?<div role="status" className="toast">{message}<button aria-label="Dismiss notification" onClick={()=>notify('')}>?</button></div>:null;}

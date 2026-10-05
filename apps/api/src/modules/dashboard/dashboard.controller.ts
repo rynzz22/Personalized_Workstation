@@ -97,7 +97,7 @@ export class DashboardController {
   @ApiOperation({
     summary: 'Aggregated endpoint returning data for all active dashboard widgets in one call',
   })
-  getAggregatedData(@Param('workspaceId') workspaceId: string) {
+  getAggregatedData(@Param('workspaceId') _workspaceId: string) {
     return {
       tasks: { open: 4, completed: 8, completionRate: 67 },
       calendar: { todayCount: 3, nextEvent: '08:00 Grade 7 Lecture' },

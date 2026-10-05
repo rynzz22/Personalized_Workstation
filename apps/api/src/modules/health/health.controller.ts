@@ -1,18 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-
-@ApiTags('Health')
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';import { PrismaService } from '../../infra/prisma.service';
 @Controller('health')
 export class HealthController {
-  @Get()
-  @ApiOperation({ summary: 'Liveness and readiness health check' })
-  check() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      service: 'Talibon Workspace API',
-      version: '1.0.0',
-    };
-  }
+ constructor(private readonly db:PrismaService){}
+ @Get() check(){return {status:'ok'};}
+ @Get('ready') async ready(){try{await this.db.$queryRaw`SELECT 1`;return {status:'ready'};}catch{throw new ServiceUnavailableException('Database unavailable');}}
 }

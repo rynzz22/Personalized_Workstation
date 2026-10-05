@@ -56,7 +56,7 @@ export class UpdateWorkspaceDto {
 export class WorkspacesController {
   @Get()
   @ApiOperation({ summary: 'List all workspaces accessible to current user' })
-  async listWorkspaces(@CurrentUser() user: any) {
+  async listWorkspaces(@CurrentUser() _user: any) {
     return [
       {
         id: 'ws-teacher-01',

@@ -22,7 +22,7 @@ export class RolesGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const userRole = request.member?.role || 'owner'; // Owner by default in personal/dev workspaces
+    const userRole = request.member?.role || ''; 
 
     const roleHierarchy: Record<string, number> = {
       viewer: 1,
@@ -33,7 +33,7 @@ export class RolesGuard implements CanActivate {
 
     const userLevel = roleHierarchy[userRole.toLowerCase()] || 0;
     const hasRole = requiredRoles.some(
-      (role) => userLevel >= (roleHierarchy[role.toLowerCase()] || 0)
+      (role) => userLevel >= (roleHierarchy[role.toLowerCase()] || Infinity)
     );
 
     if (!hasRole) {

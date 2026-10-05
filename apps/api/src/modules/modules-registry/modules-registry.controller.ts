@@ -37,7 +37,7 @@ export class ModulesRegistryController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, WorkspaceGuard)
   @ApiOperation({ summary: 'List enabled modules for a workspace' })
-  getWorkspaceModules(@Param('workspaceId') workspaceId: string) {
+  getWorkspaceModules(@Param('workspaceId') _workspaceId: string) {
     return [
       { moduleKey: 'tasks', enabled: true },
       { moduleKey: 'notes', enabled: true },
