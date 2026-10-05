@@ -1,42 +1,29 @@
-name: CI - Web (React + Vite)
-
+name: Web CI
 on:
+  pull_request:
   push:
     branches: [main, develop]
-    paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
-      - '.github/workflows/ci-web.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/web/**'
-      - 'packages/shared/**'
+permissions:
+  contents: read
 
 jobs:
-  validate-and-build:
+  web:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+      - run: pnpm exec eslint apps/web
+      - run: pnpm --filter @talibon/web test
+      - run: pnpm --filter @talibon/web build
+      - run: pnpm --filter @talibon/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @talibon/web exec playwright test
+      - uses: actions/upload-artifact@v4
         with:
-          version: 9
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Typecheck Frontend
-        run: pnpm --filter @talibon/web build
-
-      - name: Run Playwright E2E Tests
-        run: |
-          echo "Running E2E tests"
+          name: web-dist
+          path: apps/web/dist

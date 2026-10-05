@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum MemberRole {
@@ -119,6 +120,7 @@ model Workspace {
   widgets        DashboardWidget[]
   dashboard      DashboardSettings?
   tasks          Task[]
+  noteCategories NoteCategory[]
   notes          Note[]
   calendarEvents CalendarEvent[]
   goals          Goal[]
@@ -207,6 +209,7 @@ model WorkspaceModule {
 
 model DashboardSettings {
   workspaceId String   @id @map("workspace_id")
+  priorityTopic String? @map("priority_topic")
   layoutMode  String   @default("grid") @map("layout_mode")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -245,6 +248,9 @@ model Task {
   dueAt            DateTime?     @map("due_at")
   completedAt      DateTime?     @map("completed_at")
   estimatedMinutes Int?          @map("estimated_minutes")
+  position         Int @default(0)
+  assigneeId       String? @map("assignee_id")
+  milestoneId      String? @map("milestone_id")
   projectId        String?       @map("project_id")
   goalId           String?       @map("goal_id")
   createdAt        DateTime      @default(now()) @map("created_at")
@@ -264,6 +270,8 @@ model Note {
   workspaceId String    @map("workspace_id")
   title       String
   body        String    @default("")
+  categoryId  String? @map("category_id")
+  noteCategory NoteCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   category    String    @default("General")
   pinned      Boolean   @default(false)
   color       String?
@@ -284,6 +292,7 @@ model CalendarEvent {
   description String?
   startAt     DateTime @map("start_at")
   endAt       DateTime @map("end_at")
+  recurrence  String?
   allDay      Boolean  @default(false) @map("all_day")
   location    String?
   category    String   @default("general")
@@ -517,4 +526,15 @@ model TrackerRecord {
 
   @@index([trackerId])
   @@map("tracker_records")
+}
+
+model NoteCategory {
+ id String @id @default(uuid())
+ workspaceId String @map("workspace_id")
+ name String
+ parentId String? @map("parent_id")
+ workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+ notes Note[]
+ @@index([workspaceId])
+ @@map("note_categories")
 }

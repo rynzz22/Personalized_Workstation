@@ -1,38 +1,37 @@
-name: Deploy - API (NestJS)
-
+name: Deploy staging API
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/api/**'
-      - 'packages/shared/**'
-
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: staging-api
+  cancel-in-progress: false
 jobs:
-  deploy-backend:
+  deploy:
+    environment: staging
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.STAGING_DIRECT_URL }}
+      DEPLOY_HOOK: ${{ secrets.STAGING_API_DEPLOY_HOOK }}
+      HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run Prisma Database Migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          pnpm --filter @talibon/api prisma migrate deploy || true
-
-      - name: Deploy Container to Cloud Run / Railway
-        run: |
-          echo "Deploying NestJS API service container"
+      - name: Validate deployment configuration
+        run: test -n "$DATABASE_URL" && test -n "$DIRECT_URL" && test -n "$DEPLOY_HOOK" && test -n "$HEALTH_URL"
+      - run: pnpm prisma:generate
+      - run: pnpm --filter @talibon/api test
+      - run: pnpm --filter @talibon/api build
+      - run: pnpm --filter @talibon/api prisma:deploy
+      - run: pnpm prisma:seed
+      - name: Trigger container deployment
+        run: curl --fail --silent --show-error -X POST "$DEPLOY_HOOK"
+      - name: Check readiness
+        run: curl --fail --retry 12 --retry-all-errors --retry-delay 10 --silent --show-error "$HEALTH_URL"

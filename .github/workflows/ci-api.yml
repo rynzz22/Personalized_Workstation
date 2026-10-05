@@ -1,48 +1,42 @@
-name: CI - API (NestJS)
-
+name: API CI
 on:
+  pull_request:
   push:
     branches: [main, develop]
-    paths:
-      - 'apps/api/**'
-      - 'packages/shared/**'
-      - '.github/workflows/ci-api.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/api/**'
-      - 'packages/shared/**'
+permissions:
+  contents: read
 
 jobs:
-  validate-and-build:
+  api:
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: talibon_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/talibon_test
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/talibon_test
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma Client
-        run: pnpm --filter @talibon/api prisma:generate
-
-      - name: Typecheck Backend
-        run: pnpm --filter @talibon/api build
-
-      - name: Run Unit Tests
-        run: pnpm --filter @talibon/api test --if-present
-
-      - name: Build Docker Container Image
-        run: |
-          docker build -t talibon-api:latest -f apps/api/Dockerfile . || true
+      - run: pnpm prisma:generate
+      - run: pnpm exec eslint apps/api packages/shared
+      - run: pnpm --filter @talibon/api prisma:deploy
+      - run: pnpm prisma:seed
+      - run: pnpm --filter @talibon/api test
+      - run: pnpm --filter @talibon/api test:e2e
+      - run: pnpm --filter @talibon/api build
+      - run: docker build -t talibon-api:test -f apps/api/Dockerfile .
